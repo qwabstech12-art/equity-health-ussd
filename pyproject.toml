@@ -1,0 +1,18 @@
+[project]
+name = "equity-health-insurance"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.121.1",
+    "httpx>=0.28.1",
+    "passlib[bcrypt]>=1.7.4",
+    "pydantic>=2.12.4",
+    "pydantic-settings>=2.11.0",
+    "pymysql>=1.1.2",
+    "python-dotenv>=1.2.1",
+    "python-jose>=3.5.0",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.38.0",
+]
