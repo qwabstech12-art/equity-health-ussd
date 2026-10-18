@@ -205,10 +205,13 @@ class Policies(Base):
     PolicyNumber = Column(String(50), unique=True, nullable=False)
     ClientCode = Column(String(255), ForeignKey("clients.ClientCode"), nullable=False)
     AgentID = Column(Integer, ForeignKey("Agents.AgentID"))
-    ProductID = Column(Integer, ForeignKey("insuranceproducts.ProductID"), nullable=False)
+    ProductID = Column(Integer, nullable=False)
     SumAssured = Column(DECIMAL(10, 2), nullable=False)
     Premium = Column(DECIMAL(10, 2), nullable=False)
     Term = Column(Integer, nullable=False, comment="In months")
+    # How often Premium is collected: monthly | quarterly | half-yearly | annually.
+    # Existing tables need: ALTER TABLE policies ADD COLUMN PaymentFrequency VARCHAR(20) NOT NULL DEFAULT 'monthly';
+    PaymentFrequency = Column(String(20), nullable=False, default='monthly', server_default='monthly')
     StartDate = Column(Date, nullable=False)
     Name = Column(String(255))
     EndDate = Column(Date)
@@ -223,7 +226,7 @@ class Policies(Base):
 
     client = relationship("Clients", back_populates="policies")
     agent = relationship("Agents", foreign_keys=[AgentID], back_populates="policies")
-    product = relationship("InsuranceProducts", back_populates="policies")
+    # product = relationship("InsuranceProducts", back_populates="policies")
     approver = relationship("Agents", foreign_keys=[ApprovedBy])
     
 
@@ -259,23 +262,6 @@ class Clients(Base):
     branch = relationship("Branches", back_populates="clients")
     country = relationship("Countries", back_populates="clients")
     policies = relationship("Policies", back_populates="client")
-    pin = relationship("ClientPIN", back_populates="client", uselist=False)
-
-
-
-class ClientPIN(Base):
-    __tablename__ = "client_pin"
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    client_code = Column(String(255), ForeignKey("clients.ClientCode"), unique=True, nullable=False)
-    pin_hash = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True)
-    failed_attempts = Column(Integer, default=0)
-    last_attempt = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    client = relationship("Clients", back_populates="pin")
 
 
 
@@ -287,54 +273,66 @@ class PoliciesDependant(Base):
     full_name = Column(String(255))
     date_of_birth = Column(String(255))
     relation_type = Column(String(255))
-
-class InsuranceProducts(Base):
-    __tablename__ = "insuranceproducts"
-    
-    ProductID = Column(Integer, primary_key=True, autoincrement=True)
-    ProductCode = Column(String(20), unique=True, nullable=False)
-    Name = Column(String(100), nullable=False)
-    CategoryID = Column(Integer, ForeignKey("insurancecategories.CategoryID"), nullable=False)
-    SubCategoryID = Column(Integer, ForeignKey("insurancesubcategories.SubCategoryID"), nullable=False)
-    SumAssured = Column(DECIMAL(10, 2), nullable=False)
-    Premium = Column(DECIMAL(10, 2), nullable=False)
-    Term = Column(Integer, nullable=False, comment="In months")
-    Status = Column(Enum('Active', 'Inactive', name='product_status'), 
-                  default='Active', nullable=False)
-    CreatedAt = Column(TIMESTAMP, default=func.current_timestamp())
-    UpdatedAt = Column(TIMESTAMP, default=func.current_timestamp(), 
-                      onupdate=func.current_timestamp())
-    
-    category = relationship("InsuranceCategories", back_populates="products")
-    subcategory = relationship("InsuranceSubCategories", back_populates="products")
-    policies = relationship("Policies", back_populates="product")
-    product = relationship("Product", back_populates="insurance_product", uselist=False)
+    phone_number = Column(String(255))
+    allocation_percentage = Column(DECIMAL(5, 2))
+    policy_id = Column(Integer, ForeignKey("policies.PolicyID"))
 
 
-class InsuranceCategories(Base):
-    __tablename__ = "insurancecategories"
-    
-    CategoryID = Column(Integer, primary_key=True, autoincrement=True)
-    Name = Column(String(100), nullable=False)
-    Status = Column(Enum('Active', 'Inactive', name='category_status'), 
-                  default='Active', nullable=False)
-    
-    subcategories = relationship("InsuranceSubCategories", back_populates="category",
-                               cascade="all, delete-orphan")
-    products = relationship("InsuranceProducts", back_populates="category")
+class PolicyBenefits(Base):
+    __tablename__ = "policy_benefits"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    PolicyID = Column(Integer, ForeignKey("policies.PolicyID"), nullable=False)
+    ClientCode = Column(String(255), ForeignKey("clients.ClientCode"), nullable=False)
+    BenefitText = Column(String(500), nullable=False)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
 
-class InsuranceSubCategories(Base):
-    __tablename__ = "insurancesubcategories"
+# class InsuranceProducts(Base):
+#     __tablename__ = "insuranceproducts"
     
-    SubCategoryID = Column(Integer, primary_key=True, autoincrement=True)
-    CategoryID = Column(Integer, ForeignKey("insurancecategories.CategoryID", 
-                                         ondelete="CASCADE"), nullable=False)
-    Name = Column(String(100), nullable=False)
-    Status = Column(Enum('Active', 'Inactive', name='subcategory_status'), 
-                  default='Active', nullable=False)
+#     ProductID = Column(Integer, primary_key=True, autoincrement=True)
+#     ProductCode = Column(String(20), unique=True, nullable=False)
+#     Name = Column(String(100), nullable=False)
+#     CategoryID = Column(Integer, ForeignKey("insurancecategories.CategoryID"), nullable=False)
+#     SubCategoryID = Column(Integer, ForeignKey("insurancesubcategories.SubCategoryID"), nullable=False)
+#     SumAssured = Column(DECIMAL(10, 2), nullable=False)
+#     Premium = Column(DECIMAL(10, 2), nullable=False)
+#     Term = Column(Integer, nullable=False, comment="In months")
+#     Status = Column(Enum('Active', 'Inactive', name='product_status'), 
+#                   default='Active', nullable=False)
+#     CreatedAt = Column(TIMESTAMP, default=func.current_timestamp())
+#     UpdatedAt = Column(TIMESTAMP, default=func.current_timestamp(), 
+#                       onupdate=func.current_timestamp())
     
-    category = relationship("InsuranceCategories", back_populates="subcategories")
-    products = relationship("InsuranceProducts", back_populates="subcategory")
+#     category = relationship("InsuranceCategories", back_populates="products")
+#     subcategory = relationship("InsuranceSubCategories", back_populates="products")
+#     policies = relationship("Policies", back_populates="product")
+#     # product = relationship("Product", back_populates="insurance_product", uselist=False)
+
+
+# class InsuranceCategories(Base):
+#     __tablename__ = "insurancecategories"
+    
+#     CategoryID = Column(Integer, primary_key=True, autoincrement=True)
+#     Name = Column(String(100), nullable=False)
+#     Status = Column(Enum('Active', 'Inactive', name='category_status'), 
+#                   default='Active', nullable=False)
+    
+#     subcategories = relationship("InsuranceSubCategories", back_populates="category",
+#                               cascade="all, delete-orphan")
+#     products = relationship("InsuranceProducts", back_populates="category")
+
+# class InsuranceSubCategories(Base):
+#     __tablename__ = "insurancesubcategories"
+    
+#     SubCategoryID = Column(Integer, primary_key=True, autoincrement=True)
+#     CategoryID = Column(Integer, ForeignKey("insurancecategories.CategoryID", 
+#                                          ondelete="CASCADE"), nullable=False)
+#     Name = Column(String(100), nullable=False)
+#     Status = Column(Enum('Active', 'Inactive', name='subcategory_status'), 
+#                   default='Active', nullable=False)
+    
+#     category = relationship("InsuranceCategories", back_populates="subcategories")
+#     products = relationship("InsuranceProducts", back_populates="subcategory")
 
 
 
@@ -433,7 +431,7 @@ class PaymentHistory(Base):
     
 class Mandate(Base):
     __tablename__ = "mandates"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(String(255), nullable=False)
     responseCode = Column(String(255), nullable=False)
@@ -443,5 +441,138 @@ class Mandate(Base):
     mandateId = Column(String(255), nullable=True)
     clientPhone = Column(String(255), nullable=False)
     thirdPartyReferenceNo = Column(String(255), nullable=False)
-    create_at = Column(DateTime, default=func.now()) 
+    create_at = Column(DateTime, default=func.now())
 
+
+# ============= Payment gateway webhook receivers (Transflow / Uniwallet) =============
+
+class MandateCallback(Base):
+    __tablename__ = "mandate_callback"
+    id = Column(Integer, primary_key=True, index=True)
+    responseCode = Column(String(255), nullable=False)
+    responseMessage = Column(String(255), nullable=False)
+    merchantId = Column(String(255), nullable=False)
+    productId = Column(String(255), nullable=False)
+    mandateId = Column(String(255), nullable=True)
+    clientPhone = Column(String(255), nullable=False)
+    thirdPartyReferenceNo = Column(String(255), nullable=False)
+    create_at = Column(DateTime, default=func.now())
+
+
+class UniwalletCallback(Base):
+    __tablename__ = "uniwallet_callback"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    uniwalletTransactionId = Column(String(255))
+    networkTransactionId = Column(String(255))
+    refNo = Column(String(255))
+    productId = Column(String(255))
+    msisdn = Column(String(255))
+    amount = Column(String(255))
+    narration = Column(String(255))
+    timestamp = Column(String(255))
+    responseCode = Column(String(255))
+    responseMessage = Column(String(255))
+    network = Column(String(255))
+    transflowId = Column(String(255))
+    created_at = Column(DateTime, default=func.now())
+
+
+class MandateTransactionCallback(Base):
+    __tablename__ = "mandate_transaction_callback"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    responseCode = Column(String(255))
+    responseMessage = Column(String(255))
+    momTransactionId = Column(String(255))
+    debitOrderTransactionId = Column(String(255))
+    merchantId = Column(String(255))
+    productId = Column(String(255))
+    mandateId = Column(String(255))
+    clientPhone = Column(String(255))
+    amount = Column(String(255))
+    thirdPartyReferenceNo = Column(String(255))
+    created_at = Column(DateTime, default=func.now())
+
+
+
+class PaymentCredit(Base):
+    """Payment notifications received on POST /payments/credit. Every notification is kept,
+    including rejected ones, so unallocated money can be followed up."""
+    __tablename__ = "payment_credits"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    transaction_id = Column(String(100), unique=True, nullable=False)
+    policy_number = Column(String(50), nullable=False, index=True)
+    policy_id = Column(Integer, ForeignKey("policies.PolicyID"), nullable=True)
+    amount = Column(Numeric(10, 2), nullable=False)
+    phone_number = Column(String(20), nullable=False)
+    trans_date = Column(String(50), nullable=False)  # stored as sent by the caller
+    status = Column(String(20), nullable=False)  # credited | rejected
+    note = Column(String(255))
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+
+class PolicyFamilyPlan(Base):
+    """The family size a family-plan policy (Ebusua Health) was bought for. Its tier, and so its
+    premium, is fixed at purchase; family members are added into these slots later."""
+    __tablename__ = "policy_family_plans"
+    policy_id = Column(Integer, ForeignKey("policies.PolicyID"), primary_key=True)
+    plan_type = Column(String(50), nullable=False)  # e.g. OAK
+    tier_value = Column(String(20), nullable=False)
+    tier_name = Column(String(50), nullable=False)  # e.g. M+3
+    family_slots = Column(Integer, nullable=False)  # members allowed besides the policy holder
+    created_at = Column(DateTime, default=func.now())
+
+
+class PolicyFamilyMember(Base):
+    """A family member covered by a family-plan policy. member_number is the policy number plus
+    a running number (POL26900412-1, -2, ...); numbers are never reused, even after a removal."""
+    __tablename__ = "policy_family_members"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    policy_id = Column(Integer, ForeignKey("policies.PolicyID"), nullable=False, index=True)
+    sequence = Column(Integer, nullable=False)
+    member_number = Column(String(80), unique=True, nullable=False)
+    relation = Column(String(20), nullable=False)  # spouse | child | parent | other
+    full_name = Column(String(255), nullable=False)
+    date_of_birth = Column(Date, nullable=False)
+    ghana_card = Column(String(50))  # required for adults, optional for children
+    phone_number = Column(String(20))
+    status = Column(String(20), nullable=False, default="Active")  # Active | Removed
+    created_at = Column(DateTime, default=func.now())
+    removed_at = Column(DateTime)
+
+
+class PolicyPaymentMethod(Base):
+    """How a policy is paid: by bank or through the Controller (government payroll deduction).
+    Client and policy details are copied in as they were when the method was set. Setting a new
+    method marks the previous one Replaced, so the history is kept."""
+    __tablename__ = "policy_payment_methods"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    policy_id = Column(Integer, ForeignKey("policies.PolicyID"), nullable=False, index=True)
+    payment_mode = Column(String(20), nullable=False)  # bank | controller
+    status = Column(String(20), nullable=False, default="Active")  # Active | Replaced
+
+    # Client
+    client_code = Column(String(255), nullable=False, index=True)
+    client_name = Column(String(255))
+    phone_number = Column(String(20), nullable=False)
+    ghana_card = Column(String(50))
+
+    # Policy
+    policy_number = Column(String(50), nullable=False, index=True)
+    product_name = Column(String(255))
+    premium = Column(Numeric(10, 2))
+    frequency = Column(String(20))
+
+    # Bank
+    bank_name = Column(String(100))
+    bank_branch = Column(String(100))
+    account_name = Column(String(255))
+    account_number = Column(String(50))
+
+    # Controller
+    staff_id = Column(String(50))
+    employer = Column(String(255))
+    management_unit = Column(String(255))
+
+    created_at = Column(DateTime, default=func.now())
+    replaced_at = Column(DateTime)

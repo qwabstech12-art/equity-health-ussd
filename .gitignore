@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+venv
+
+# Secrets
+.env
+
+# Editor and tool settings
+.claude/
+.idea/
+
+# Old planning notes from an earlier AI tool
+.artifacts/

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equity Health Admin</title>
+<style>
+:root{--navy:#0C0F3A;--ink:#222;--muted:#666;--faint:#999;--line:#e3e3e3;--bg:#f6f6f6;--card:#fff;--red:#b42318;--green:#2e6b1f;--amber:#8a5a00}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+button,input,select{font:inherit}
+header{background:#fff;border-bottom:1px solid var(--line);padding:10px 24px;display:flex;align-items:center;gap:16px}
+header img{height:34px}
+header .title{font-weight:600;color:var(--navy);padding-left:16px;border-left:1px solid var(--line)}
+header .sp{flex:1}
+header .btn{white-space:nowrap}
+@media (max-width:640px){header{padding:10px 16px;gap:10px}header img{height:28px}header .ro{display:none}main{padding:16px}}
+.muted{color:var(--muted)}.small{font-size:12px}
+main{max-width:1280px;margin:0 auto;padding:20px 24px 48px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 12px;cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:#bbb}.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.card .k{font-size:12px;color:var(--muted)}.card .v{font-size:22px;font-weight:600;margin-top:2px}.card .s{font-size:12px;color:var(--faint)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.tab.on{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.bar input{flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.bar select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.tablewrap{background:#fff;border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);background:#fafafa;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer}tbody tr.click:hover{background:#f7f8fc}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+a.link{color:var(--navy);text-decoration:none;cursor:pointer}a.link:hover{text-decoration:underline}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;border:1px solid var(--line);color:var(--muted);background:#fff}
+.pill.Active,.pill.credited,.pill.Success,.pill.completed{color:var(--green);border-color:#cfe3c7}
+.pill.Pending,.pill.pending{color:var(--amber);border-color:#ecdcb4}
+.pill.Cancelled,.pill.Removed,.pill.Replaced,.pill.Expired,.pill.Lapsed,.pill.rejected,.pill.failed,.pill.Inactive{color:var(--red);border-color:#f0cdc9}
+.pager{display:flex;align-items:center;justify-content:space-between;padding:10px 2px;color:var(--muted);font-size:13px}
+.empty{padding:28px;text-align:center;color:var(--faint)}
+.err{color:var(--red);font-size:13px;margin-top:8px}
+#gate{max-width:380px;margin:12vh auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px}
+#gate img{height:40px;margin-bottom:16px}
+#gate input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;margin:10px 0}
+#drawer{position:fixed;inset:0;background:rgba(0,0,0,.25);display:none;justify-content:flex-end;z-index:5}
+#drawer.open{display:flex}
+#panel{width:min(820px,100%);height:100%;background:var(--bg);overflow-y:auto;padding:20px 24px}
+#panel h2{margin:0;font-size:20px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 18px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0 18px}
+.kv div span{display:block;font-size:12px;color:var(--muted)}
+h3{font-size:14px;margin:18px 0 8px}
+.pmform{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+.pmform .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px;margin-top:10px}
+.pmform label{display:block;font-size:12px;color:var(--muted)}
+.pmform input,.pmform select{display:block;width:100%;margin-top:3px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.pmform .modes{display:flex;gap:16px;margin-top:10px;font-size:14px}
+.pmform .modes label{display:flex;align-items:center;gap:6px;color:var(--ink);font-size:14px}
+.pmform .modes input{width:auto;margin:0}
+.fielderr{color:var(--red);font-size:12px;min-height:0}
+.ok{color:var(--green);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="gate" hidden>
+  <img src="/admin/logo.png" alt="Equity Health Insurance">
+  <div style="font-weight:600;font-size:16px">Admin sign in</div>
+  <div class="muted small">Enter the admin key to view the database. It's kept only for this browser tab.</div>
+  <form id="gateForm">
+    <input id="keyInput" type="password" placeholder="Admin key" autocomplete="off" required>
+    <button class="btn primary" style="width:100%">View data</button>
+    <div id="gateErr" class="err"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <img src="/admin/logo.png" alt="Equity Health Insurance">
+    <span class="title">Admin</span>
+    <span class="muted small ro">Read only</span>
+    <span class="sp"></span>
+    <button class="btn" id="refresh">Refresh</button>
+    <button class="btn" id="signout">Sign out</button>
+  </header>
+  <main>
+    <div class="cards" id="cards"></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="bar">
+      <input id="q" type="search" placeholder="Search">
+      <select id="filter" hidden></select>
+    </div>
+    <div class="tablewrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+    <div class="pager"><span id="count"></span><span><button class="btn" id="prev">Previous</button> <button class="btn" id="next">Next</button></span></div>
+  </main>
+</div>
+
+<div id="drawer"><div id="panel"></div></div>
+
+<script>
+const SIZE = 25;
+const money = v => v == null ? "" : "GHS " + Number(v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const date = v => v ? v.slice(0, 10) : "";
+const when = v => v ? v.slice(0, 16).replace("T", " ") : "";
+const esc = v => v == null ? "" : String(v).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const pill = v => v ? `<span class="pill ${esc(v)}">${esc(v)}</span>` : "";
+const client = v => v ? `<a class="link mono" data-client="${esc(v)}">${esc(v)}</a>` : "";
+const mono = v => `<span class="mono">${esc(v)}</span>`;
+
+const TABS = {
+  clients: {label: "Customers", url: "/api/admin/clients", search: "Search by phone, name, client code or Ghana Card", rowClient: "client_code",
+    cols: [["Client code", r => client(r.client_code)], ["Name", r => esc(r.name)], ["Phone", r => mono(r.phone_number)],
+           ["Ghana Card", r => mono(r.ghana_card)], ["Date of birth", r => date(r.date_of_birth)], ["Status", r => pill(r.status)], ["Registered", r => when(r.created_at)]]},
+  policies: {label: "Policies", url: "/api/admin/policies", search: "Search by policy number, client code or product",
+    filter: ["status", "All statuses", ["Active", "Pending", "Lapsed", "Cancelled", "Expired"]],
+    cols: [["Policy", r => mono(r.policy_number)], ["Client", r => client(r.client_code)], ["Product", r => esc(r.product_name)],
+           ["Premium", r => money(r.premium), "num"], ["Sum assured", r => money(r.sum_assured), "num"], ["Start", r => date(r.start_date)], ["Status", r => pill(r.status)]]},
+  payments: {label: "Payments", url: "/api/admin/payments", search: "Search by transaction id or policy number",
+    cols: [["Transaction", r => mono(r.transaction_id)], ["Policy", r => mono(r.policy_number)], ["Amount", r => money(r.amount), "num"],
+           ["Method", r => esc(r.method)], ["Status", r => pill(r.status)], ["When", r => when(r.created_at)]]},
+  credits: {label: "Payment credits", url: "/api/admin/payment-credits", search: "Search by transaction id, policy number or phone",
+    filter: ["status", "All results", ["credited", "rejected"]],
+    cols: [["Transaction", r => mono(r.transaction_id)], ["Policy", r => mono(r.policy_number)], ["Amount", r => money(r.amount), "num"],
+           ["Payer phone", r => mono(r.phone_number)], ["Result", r => pill(r.status)], ["Note", r => esc(r.note)], ["Received", r => when(r.created_at)]]},
+  dependants: {label: "Dependants", url: "/api/admin/dependants", search: "Search by name, phone or parent client code",
+    filter: ["relation_type", "Dependants and beneficiaries", ["Dependent", "Beneficiary"]],
+    cols: [["Name", r => esc(r.full_name)], ["Type", r => esc(r.relation_type)], ["Parent", r => client(r.client_code)], ["Date of birth", r => esc(r.date_of_birth)],
+           ["Phone", r => mono(r.phone_number)], ["Allocation", r => r.allocation_percentage == null ? "" : r.allocation_percentage + "%", "num"], ["Policy", r => mono(r.policy_number)]]},
+  family: {label: "Family members", url: "/api/admin/family-members", search: "Search by name, member number, policy number, Ghana Card or phone",
+    filter: ["status", "Active and removed", ["Active", "Removed"]],
+    cols: [["Member number", r => mono(r.member_number)], ["Name", r => esc(r.full_name)], ["Relation", r => esc(r.relation)],
+           ["Date of birth", r => date(r.date_of_birth)], ["Ghana Card", r => mono(r.ghana_card)], ["Holder", r => client(r.client_code)],
+           ["Status", r => pill(r.status)], ["Added", r => when(r.added_at)]]},
+  methods: {label: "Payment methods", url: "/api/admin/payment-methods", search: "Search by policy, name, phone, account number, staff ID or employer",
+    filter: ["payment_mode", "Bank and Controller", ["bank", "controller"]],
+    cols: [["Policy", r => mono(r.policy_number)], ["Client", r => client(r.client_code)], ["Name", r => esc(r.client_name)],
+           ["Mode", r => r.payment_mode === "controller" ? "Controller" : "Bank"], ["Details", r => esc(r.details)],
+           ["Status", r => pill(r.status)], ["Set", r => when(r.set_at)]]},
+};
+
+let key = "", tab = "clients", page = 1, total = 0, timer;
+try { key = sessionStorage.getItem("ehiAdminKey") || ""; } catch (e) {}
+const $ = id => document.getElementById(id);
+
+async function api(url, body) {
+  const opts = {headers: {"x-api-key": key}};
+  if (body) { opts.method = "POST"; opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const res = await fetch(url, opts);
+  if (res.status === 401) { signOut("That admin key wasn't accepted."); throw new Error("unauthorised"); }
+  if (!res.ok) {
+    const detail = (await res.json().catch(() => ({}))).detail;
+    const msg = Array.isArray(detail) ? detail.map(d => String(d.msg || "").replace(/^Value error, /, "")).join("; ") : detail;
+    throw new Error(msg || res.statusText);
+  }
+  return res.json();
+}
+
+function signOut(msg) {
+  key = ""; try { sessionStorage.removeItem("ehiAdminKey"); } catch (e) {}
+  $("app").hidden = true; $("gate").hidden = false; $("gateErr").textContent = msg || ""; $("keyInput").focus();
+}
+
+async function loadSummary() {
+  const s = await api("/api/admin/summary");
+  const st = s.policies_by_status || {};
+  $("cards").innerHTML = [
+    ["Customers", s.clients.toLocaleString(), ""],
+    ["Policies", s.policies.toLocaleString(), `${st.Active || 0} active, ${st.Pending || 0} pending`],
+    ["Premium on active policies", money(s.active_monthly_premium), "per billing period"],
+    ["Payments received", money(s.payments_total), `${s.payments.toLocaleString()} payments`],
+    ["Rejected credits", s.rejected_credits.toLocaleString(), "need refund or reallocation"],
+  ].map(([k, v, sub]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`).join("");
+}
+
+function drawTabs() {
+  $("tabs").innerHTML = Object.entries(TABS).map(([id, t]) => `<button class="tab ${id === tab ? "on" : ""}" data-tab="${id}">${t.label}</button>`).join("");
+  const t = TABS[tab];
+  $("q").placeholder = t.search;
+  const f = $("filter");
+  if (t.filter) {
+    f.hidden = false;
+    f.innerHTML = `<option value="">${t.filter[1]}</option>` + t.filter[2].map(o => `<option>${o}</option>`).join("");
+  } else f.hidden = true;
+  $("thead").innerHTML = "<tr>" + t.cols.map(c => `<th class="${c[2] || ""}">${c[0]}</th>`).join("") + "</tr>";
+}
+
+async function loadTable() {
+  const t = TABS[tab];
+  const p = new URLSearchParams({page, size: SIZE});
+  if ($("q").value.trim()) p.set("q", $("q").value.trim());
+  if (t.filter && $("filter").value) p.set(t.filter[0], $("filter").value);
+  $("tbody").innerHTML = `<tr><td class="empty" colspan="${t.cols.length}">Loading…</td></tr>`;
+  try {
+    const d = await api(`${t.url}?${p}`);
+    total = d.total;
+    $("tbody").innerHTML = d.items.length ? d.items.map(r =>
+      `<tr class="${t.rowClient ? "click" : ""}" ${t.rowClient ? `data-client="${esc(r[t.rowClient])}"` : ""}>` +
+      t.cols.map(c => `<td class="${c[2] || ""}">${c[1](r)}</td>`).join("") + "</tr>").join("")
+      : `<tr><td class="empty" colspan="${t.cols.length}">Nothing found</td></tr>`;
+    const from = total ? (page - 1) * SIZE + 1 : 0;
+    $("count").textContent = `${from}–${Math.min(page * SIZE, total)} of ${total.toLocaleString()}`;
+    $("prev").disabled = page <= 1; $("next").disabled = page * SIZE >= total;
+  } catch (e) {
+    if (e.message !== "unauthorised") $("tbody").innerHTML = `<tr><td class="empty" colspan="${t.cols.length}">Couldn't load this list: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+function subTable(rows, cols) {
+  if (!rows.length) return `<div class="tablewrap"><div class="empty">None</div></div>`;
+  return `<div class="tablewrap"><table><thead><tr>${cols.map(c => `<th class="${c[2] || ""}">${c[0]}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(r => "<tr>" + cols.map(c => `<td class="${c[2] || ""}">${c[1](r)}</td>`).join("") + "</tr>").join("") + "</tbody></table></div>";
+}
+
+async function openClient(code) {
+  $("drawer").classList.add("open");
+  $("panel").innerHTML = `<p class="muted">Loading…</p>`;
+  try {
+    const d = await api(`/api/admin/clients/${encodeURIComponent(code)}`);
+    const c = d.client;
+    const strip = cols => cols.filter(col => !["Client", "Parent", "Holder"].includes(col[0]));
+    const familyCol = ["Family", r => r.family_plan ? `${esc(r.family_plan)} <span class="muted small">${r.family_slots_used} of ${r.family_slots} added</span>` : ""];
+    const policyCols = strip(TABS.policies.cols);
+    if (d.policies.some(p => p.family_plan)) policyCols.splice(2, 0, familyCol);
+    $("panel").innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
+        <div><h2>${esc(c.name) || "No name on file"}</h2><div class="mono muted">${esc(c.client_code)}</div></div>
+        <button class="btn" id="close">Close</button>
+      </div>
+      <div class="kv">
+        <div><span>Phone</span>${mono(c.phone_number)}</div>
+        <div><span>Ghana Card</span>${mono(c.ghana_card) || "—"}</div>
+        <div><span>Date of birth</span>${date(c.date_of_birth) || "—"}</div>
+        <div><span>Gender</span>${esc(c.gender)}</div>
+        <div><span>Agent ID</span>${esc(c.agent_id) || "Self sign-up"}</div>
+        <div><span>Status</span>${pill(c.status)}</div>
+        <div><span>Registered</span>${when(c.created_at)}</div>
+      </div>
+      <h3>Policies (${d.policies.length})</h3>${subTable(d.policies, policyCols)}
+      ${d.family_members.length ? `<h3>Family members (${d.family_members.filter(f => f.status === "Active").length} active)</h3>${subTable(d.family_members, [...strip(TABS.family.cols).slice(0, 5), ["Policy", r => mono(r.policy_number)], ...strip(TABS.family.cols).slice(5)])}` : ""}
+      <h3>Payment methods</h3>${subTable(d.payment_methods, strip(TABS.methods.cols).filter(c => c[0] !== "Name"))}
+      ${methodForm(d.policies)}
+      <h3>Payments (${d.payments.length})</h3>${subTable(d.payments, TABS.payments.cols)}
+      <h3>Payment credits (${d.payment_credits.length})</h3>${subTable(d.payment_credits, TABS.credits.cols)}
+      <h3>Dependants and beneficiaries (${d.dependants.length})</h3>${subTable(d.dependants, strip(TABS.dependants.cols))}`;
+    wireMethodForm(code);
+  } catch (e) {
+    if (e.message !== "unauthorised") $("panel").innerHTML = `<button class="btn" id="close">Close</button><p class="err">Couldn't load this customer: ${esc(e.message)}</p>`;
+  }
+}
+
+const CLOSED = ["Cancelled", "Expired"];
+
+function methodForm(policies) {
+  const open = policies.filter(p => !CLOSED.includes(p.status));
+  if (!open.length) return `<p class="muted small">No open policies, so there's no payment method to change.</p>`;
+  const field = (id, label, req) => `<label for="${id}">${label}${req ? "" : " (optional)"}<input id="${id}" autocomplete="off"><span class="fielderr" id="${id}-err"></span></label>`;
+  return `<button class="btn" id="pmToggle">Change payment method</button>
+    <form class="pmform" id="pmForm" hidden novalidate>
+      <label for="pmPolicy">Policy<select id="pmPolicy">${open.map(p => `<option value="${esc(p.policy_number)}">${esc(p.policy_number)}, ${esc(p.product_name)} (${esc(p.status)})</option>`).join("")}</select></label>
+      <div class="modes" role="radiogroup" aria-label="Payment mode">
+        <label><input type="radio" name="pmMode" value="bank" checked> Bank</label>
+        <label><input type="radio" name="pmMode" value="controller"> Controller (payroll deduction)</label>
+      </div>
+      <div class="row" id="pmBank">${field("pmBankName", "Bank name", true)}${field("pmBranch", "Branch", false)}${field("pmAccName", "Account name", true)}${field("pmAccNo", "Account number", true)}</div>
+      <div class="row" id="pmCtrl" hidden>${field("pmStaff", "Staff ID", true)}${field("pmEmployer", "Employer", true)}${field("pmUnit", "Management unit", false)}</div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" id="pmSave">Save payment method</button><button class="btn" type="button" id="pmCancel">Cancel</button></div>
+      <div id="pmMsg"></div>
+    </form>`;
+}
+
+function wireMethodForm(code) {
+  const form = $("pmForm");
+  if (!form) return;
+  const mode = () => form.querySelector('input[name="pmMode"]:checked').value;
+  const required = () => mode() === "bank" ? ["pmBankName", "pmAccName", "pmAccNo"] : ["pmStaff", "pmEmployer"];
+  const val = id => $(id).value.trim();
+  const opt = id => val(id) || null;
+  $("pmToggle").onclick = () => { form.hidden = !form.hidden; if (!form.hidden) $("pmPolicy").focus(); };
+  $("pmCancel").onclick = () => { form.hidden = true; $("pmMsg").innerHTML = ""; };
+  form.querySelectorAll('input[name="pmMode"]').forEach(r => r.onchange = () => {
+    $("pmBank").hidden = mode() !== "bank"; $("pmCtrl").hidden = mode() !== "controller";
+  });
+  form.querySelectorAll("input:not([type=radio])").forEach(i => i.oninput = () => { $(`${i.id}-err`).textContent = ""; });
+  form.onsubmit = async e => {
+    e.preventDefault();
+    $("pmMsg").innerHTML = "";
+    let missing = false;
+    for (const id of required()) {
+      if (!val(id)) { $(`${id}-err`).textContent = "Required"; missing = true; }
+    }
+    if (missing) { $("pmMsg").innerHTML = `<p class="err">Fill in the required fields first.</p>`; return; }
+    const body = {policy_number: $("pmPolicy").value, payment_mode: mode()};
+    if (mode() === "bank") body.bank = {bank_name: val("pmBankName"), branch: opt("pmBranch"), account_name: val("pmAccName"), account_number: val("pmAccNo")};
+    else body.controller = {staff_id: val("pmStaff"), employer: val("pmEmployer"), management_unit: opt("pmUnit")};
+    $("pmSave").disabled = true; $("pmSave").textContent = "Saving…";
+    try {
+      const r = await api("/api/admin/payment-method", body);
+      await openClient(code);  // reload so the new Active and Replaced rows show
+      $("pmToggle")?.insertAdjacentHTML("beforebegin", `<p class="ok">${esc(r.message)}</p>`);
+    } catch (err) {
+      if (err.message === "unauthorised") return;
+      $("pmMsg").innerHTML = `<p class="err">Couldn't save: ${esc(err.message)}</p>`;
+      $("pmSave").disabled = false; $("pmSave").textContent = "Save payment method";
+    }
+  };
+}
+
+async function start() {
+  $("gate").hidden = true; $("app").hidden = false;
+  drawTabs();
+  try { await loadSummary(); } catch (e) { if (e.message === "unauthorised") return; }
+  loadTable();
+}
+
+$("gateForm").onsubmit = e => {
+  e.preventDefault();
+  key = $("keyInput").value.trim();
+  try { sessionStorage.setItem("ehiAdminKey", key); } catch (err) {}
+  start();
+};
+$("signout").onclick = () => signOut();
+$("refresh").onclick = () => { loadSummary().catch(() => {}); loadTable(); };
+$("tabs").onclick = e => { const b = e.target.closest("[data-tab]"); if (!b) return; tab = b.dataset.tab; page = 1; $("q").value = ""; drawTabs(); loadTable(); };
+$("q").oninput = () => { clearTimeout(timer); timer = setTimeout(() => { page = 1; loadTable(); }, 300); };
+$("filter").onchange = () => { page = 1; loadTable(); };
+$("prev").onclick = () => { page--; loadTable(); };
+$("next").onclick = () => { page++; loadTable(); };
+document.body.addEventListener("click", e => {
+  const a = e.target.closest("[data-client]");
+  if (a && !e.target.closest("#panel")) { openClient(a.dataset.client); return; }
+  if (e.target.id === "close" || e.target.id === "drawer") $("drawer").classList.remove("open");
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("drawer").classList.remove("open"); });
+
+key ? start() : signOut();
+</script>
+</body>
+</html>
