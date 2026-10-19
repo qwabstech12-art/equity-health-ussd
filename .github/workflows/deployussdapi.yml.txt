@@ -1,0 +1,98 @@
+name: Deploy USSD API
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+concurrency:
+  group: ussd-api-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy USSD API to VPS
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    steps:
+      - name: Validate configuration
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -eu
+
+          if [ -z "$VPS_HOST" ]; then
+            echo "ERROR: VPS_HOST is missing"
+            exit 1
+          fi
+
+          if [ -z "$VPS_USER" ]; then
+            echo "ERROR: VPS_USER is missing"
+            exit 1
+          fi
+
+          if [ -z "$VPS_SSH_KEY" ]; then
+            echo "ERROR: VPS_SSH_KEY is missing"
+            exit 1
+          fi
+
+          echo "USSD API deployment configuration OK"
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -eu
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$VPS_SSH_KEY" \
+            > ~/.ssh/ussd_api_key
+          chmod 600 ~/.ssh/ussd_api_key
+
+          ssh-keyscan \
+            -p 22 \
+            -H "$VPS_HOST" \
+            >> ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -eu
+
+          ssh \
+            -i ~/.ssh/ussd_api_key \
+            -p 22 \
+            -o BatchMode=yes \
+            -o ConnectTimeout=10 \
+            "$VPS_USER@$VPS_HOST" \
+            "echo 'SSH connection to USSD API VPS successful'"
+
+      - name: Deploy USSD API
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -eu
+
+          ssh \
+            -i ~/.ssh/ussd_api_key \
+            -p 22 \
+            -o BatchMode=yes \
+            -o ConnectTimeout=10 \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=10 \
+            "$VPS_USER@$VPS_HOST" \
+            "sudo -n /usr/local/bin/deploy-ussd-api"
