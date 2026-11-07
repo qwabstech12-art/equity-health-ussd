@@ -45,31 +45,36 @@ class PolicyPricingResponse(BaseModel):
 
 # ============= Customer Registration =============
 
-GHANA_CARD_PATTERN = re.compile(r"^GHA-\d{9}-\d$")
 
 
 def normalize_ghana_card(value: Optional[str]) -> Optional[str]:
-    """Uppercase and strip spaces, then check the GHA-XXXXXXXXX-X format.
-    Only the format is checked -- authenticity needs the NIA API, which isn't available yet."""
+    """Accept GHA plus 10 digits with or without dashes -- the telco sends GHA0998765435 --
+    and store it in one form, GHA-099876543-5, so the same card can't be saved twice in two
+    formats. Only the format is checked; authenticity needs the NIA API, which isn't available yet."""
     if value is None or not value.strip():
         return None
-    card = re.sub(r"\s+", "", value).upper()
-    if not GHANA_CARD_PATTERN.match(card):
-        raise ValueError(f"{ghana_card_problem(card)}. It should be GHA-, 9 digits, a dash and 1 digit, e.g. GHA-123456789-1")
-    return card
+    compact = re.sub(r"[\s-]+", "", value).upper()
+    if not re.fullmatch(r"GHA\d{10}", compact):
+        raise ValueError(f"{ghana_card_problem(compact)}. It should be GHA followed by 10 digits, e.g. GHA1234567891 or GHA-123456789-1")
+    return f"GHA-{compact[3:12]}-{compact[12]}"
 
 
-def ghana_card_problem(card: str) -> str:
-    """Say what's wrong with a card number that failed GHANA_CARD_PATTERN."""
-    if not card.startswith("GHA-"):
-        return "Ghana Card number must start with GHA-"
-    parts = card[4:].split("-")
-    if len(parts) != 2 or not all(p.isdigit() for p in parts):
-        return "Ghana Card number must be digits separated by one dash after GHA-"
-    middle, last = parts
-    if len(middle) != 9:
-        return f"Ghana Card number has {len(middle)} digits between GHA- and the last dash; it needs 9"
-    return f"Ghana Card number has {len(last)} digits after the last dash; it needs 1"
+def ghana_card_problem(compact: str) -> str:
+    """Say what's wrong with a card number (spaces and dashes already removed)."""
+    if not compact.startswith("GHA"):
+        return "Ghana Card number must start with GHA"
+    rest = compact[3:]
+    if not rest.isdigit():
+        return "Ghana Card number must be only digits after GHA"
+    return f"Ghana Card number has {len(rest)} digits after GHA; it needs 10"
+
+
+def ghana_card_forms(card: Optional[str]) -> list:
+    """The forms a card may be stored in: dashed (current) and compact (older records)."""
+    if not card:
+        return []
+    compact = re.sub(r"[\s-]+", "", card).upper()
+    return list(dict.fromkeys([card, f"GHA-{compact[3:12]}-{compact[12]}" if re.fullmatch(r"GHA\d{10}", compact) else card, compact]))
 
 
 def validate_dob(value: str) -> str:

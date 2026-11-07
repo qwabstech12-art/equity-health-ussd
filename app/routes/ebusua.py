@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.setup.database import get_db
 from app.models.migration import Clients, Policies, PolicyFamilyPlan, PolicyFamilyMember
 from app.schemas.ussd_schemas import (
+    ghana_card_forms,
     EbusuaRegisterRequest, EbusuaRegisterResponse, EbusuaPurchaseRequest, EbusuaProductResponse, EbusuaPlan,
     EbusuaTier, AddFamilyMembersRequest, AddFamilyMembersResponse,
     FamilyMemberOut, FamilyPolicyOut, FamilyPoliciesResponse, RemoveFamilyMemberResponse,
@@ -225,7 +226,7 @@ async def add_members(payload: AddFamilyMembersRequest, db: Session = Depends(ge
         raise HTTPException(status_code=409, detail=f"Only {slots_left} family slot{'s' if slots_left != 1 else ''} left on this policy; {len(payload.members)} members were sent")
 
     cards = [m.ghana_card for m in payload.members if m.ghana_card]
-    taken = {holder.NationalIDNumber, *(m.ghana_card for m in existing)}
+    taken = {form for card in (holder.NationalIDNumber, *(m.ghana_card for m in existing)) for form in ghana_card_forms(card)}
     if len(cards) != len(set(cards)) or taken.intersection(cards):
         raise HTTPException(status_code=409, detail="A Ghana Card number appears more than once on this policy")
 

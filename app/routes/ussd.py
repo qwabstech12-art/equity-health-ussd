@@ -205,8 +205,9 @@ def find_or_build_client(db: Session, payload, agent_id):
     reused, so a retried USSD session doesn't fail; any other phone/card clash is a 409. A new
     client is built but not added to the session -- the caller adds it with the policy."""
     by_phone = db.query(Clients).filter(Clients.PhoneNumber == payload.phone_number).first()
-    by_card = db.query(Clients).filter(Clients.NationalIDNumber == payload.ghana_card).first()
-    if by_phone and by_phone.NationalIDNumber == payload.ghana_card:
+    forms = ghana_card_forms(payload.ghana_card)
+    by_card = db.query(Clients).filter(Clients.NationalIDNumber.in_(forms)).first()
+    if by_phone and by_phone.NationalIDNumber in forms:
         # A reused client registered before DoB was mandatory gets the one entered now.
         if not by_phone.DateOfBirth:
             by_phone.DateOfBirth = parse_dob(payload.dob)
@@ -281,7 +282,7 @@ async def register_customer(payload: CustomerRegisterRequest, db: Session = Depe
     Gender isn't collected on USSD, so it stays 'Other'."""
     if db.query(Clients).filter(Clients.PhoneNumber == payload.phone_number).first():
         raise HTTPException(status_code=409, detail="A client is already registered with this phone number")
-    if db.query(Clients).filter(Clients.NationalIDNumber == payload.ghana_card).first():
+    if db.query(Clients).filter(Clients.NationalIDNumber.in_(ghana_card_forms(payload.ghana_card))).first():
         raise HTTPException(status_code=409, detail="A client is already registered with this Ghana Card number")
 
     agent_code = payload.agent_code if payload.registration_type == "agent_assisted" else "EHI_0000_C"
@@ -354,7 +355,7 @@ async def register_dependent(payload: DependentRegisterRequest, db: Session = De
 
     if db.query(Clients).filter(Clients.PhoneNumber == payload.dependent_phone).first():
         raise HTTPException(status_code=409, detail="A client is already registered with this phone number")
-    if db.query(Clients).filter(Clients.NationalIDNumber == payload.dependent_ghana_card).first():
+    if db.query(Clients).filter(Clients.NationalIDNumber.in_(ghana_card_forms(payload.dependent_ghana_card))).first():
         raise HTTPException(status_code=409, detail="A client is already registered with this Ghana Card number")
 
     try:
